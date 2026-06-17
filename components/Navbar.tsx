@@ -41,7 +41,7 @@ export default function Navbar() {
           </div>
 
           <div className="hidden lg:flex items-center gap-3">
-            <a href="#" className="text-sm font-semibold text-[#3D504A] hover:text-[#075E54] px-4 py-2 transition">
+            <a href="https://app.allchat.in/" className="text-sm font-semibold text-[#3D504A] hover:text-[#075E54] px-4 py-2 transition">
               Sign in
             </a>
           </div>
