@@ -22,6 +22,7 @@ export const metadata: Metadata = {
     google: "F3O485R2NV43KffgwGlx-SfMXSNdYJksu1ToFKa6vG8",
   },
 };
+
 export default function RootLayout({
   children,
 }: {
@@ -42,7 +43,6 @@ export default function RootLayout({
             gtag('config', 'G-XLD73GSYRG');
           `}
         </Script>
-
         <Navbar />
         <main>{children}</main>
         <Footer />
