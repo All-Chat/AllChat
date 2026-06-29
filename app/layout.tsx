@@ -16,10 +16,12 @@ export const metadata: Metadata = {
   description:
     "Launch WhatsApp campaigns, automate conversations, and grow your business with AllChat. Broadcasts, chatbots, team inbox, and analytics — all in one place.",
   alternates: {
-    canonical: "https://www.allchat.com/",
+    canonical: "https://www.allchat.in/",
+  },
+  verification: {
+    google: "F3O485R2NV43KffgwGlx-SfMXSNdYJksu1ToFKa6vG8",
   },
 };
-
 export default function RootLayout({
   children,
 }: {
