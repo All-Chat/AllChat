@@ -164,7 +164,7 @@ export default function Footer() {
           <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 text-center sm:text-left">
             <div>
               <p className="text-sm text-white/40">
-                © 2025 AllChat, Inc. All rights reserved.
+                © 2026 The Real Leads, Inc. All rights reserved.
               </p>
               <p className="text-xs text-white/30 mt-1">
                 Developer of AllChat:{" "}
