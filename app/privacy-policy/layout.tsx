@@ -2,7 +2,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "AllChat – WhatsApp Marketing and Automation Platform",
+  title: "AllChat Privacy Policy",
   description:
     "Review AllChat’s Privacy Policy to see how we collect, use, and protect your personal data while you use our secure AI chat platform.",
 };
