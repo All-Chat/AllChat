@@ -12,7 +12,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "AllChat – WhatsApp Marketing and Automation Platform",
+  title: "AllChat — WhatsApp Marketing & Automation Platform",
   description:
     "AllChat is a fast, secure AI chat platform that helps you automate conversations, support customers, and boost productivity with smart, easy-to-use tools.",
 };
