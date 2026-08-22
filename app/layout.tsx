@@ -15,6 +15,10 @@ export const metadata: Metadata = {
   title: "AllChat — WhatsApp Marketing & Automation Platform",
   description:
     "AllChat is a fast, secure AI chat platform that helps you automate conversations, support customers, and boost productivity with smart, easy-to-use tools.",
+      icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
