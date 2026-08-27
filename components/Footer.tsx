@@ -15,6 +15,7 @@ export default function Footer() {
       links: [
         { label: "About", href: "/about" },
         { label: "Contact", href: "/contact" },
+        { label: "Blog", href: "/blogs" },
         { label: "The Real Leads", href: "https://www.therealleads.com/", external: true },
       ],
     },
