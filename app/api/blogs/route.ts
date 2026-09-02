@@ -13,10 +13,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     await connectDB()
     const body = await request.json()
     
-    // 1. Await the params before accessing .id
+    // Await the params before accessing .id
     const { id } = await params
 
-    // 2. Use returnDocument: 'after' instead of new: true to fix the warning
+    // Use returnDocument: 'after' instead of new: true to fix mongoose warnings
     const updatedBlog = await Blog.findByIdAndUpdate(
       id,
       body,
@@ -39,7 +39,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     await connectDB()
     
-    // 1. Await the params before accessing .id
+    // Await the params before accessing .id
     const { id } = await params
 
     const deletedBlog = await Blog.findByIdAndDelete(id)
@@ -54,11 +54,3 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ success: false, error: message }, { status: 500 })
   }
 }
-// Add this at the very bottom of your app/api/blogs/route.ts file
-export const routeSegmentConfig = {
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb', // Allows up to 10MB payloads
-    },
-  },
-};
