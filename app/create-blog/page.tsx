@@ -28,17 +28,23 @@ import {
   LayoutTemplate,
   ListChecks,
   Workflow,
+  Link2,
+  Code2,
+  Sparkles,
 } from 'lucide-react'
 
 interface BlogData {
   _id: string
   title: string
+  slug?: string
   writer: string
   readingTime: string
   content: string
   bannerImage: string
   metaTitle?: string
   metaDescription?: string
+  canonicalUrl?: string
+  schemaMarkup?: string
 }
 
 // --- Reusable Animation Components ---
@@ -77,8 +83,8 @@ const AnimatedText: React.FC<FadeInProps> = ({ children, delay = 0, className = 
 // Floating Background Icons
 const FloatingBackground = () => {
   const icons = [
-    { Icon: FileText, top: '15%', left: '10%', size: 40, duration: 7, delay: 0, color: '#22c55e' }, // green-500
-    { Icon: Pencil, top: '25%', left: '85%', size: 30, duration: 9, delay: 1, color: '#16a34a' }, // green-600
+    { Icon: FileText, top: '15%', left: '10%', size: 40, duration: 7, delay: 0, color: '#22c55e' },
+    { Icon: Pencil, top: '25%', left: '85%', size: 30, duration: 9, delay: 1, color: '#16a34a' },
     { Icon: ImageIcon, top: '65%', left: '15%', size: 35, duration: 8, delay: 0.5, color: '#22c55e' },
     { Icon: LayoutTemplate, top: '75%', left: '80%', size: 30, duration: 10, delay: 1.5, color: '#16a34a' },
     { Icon: ListChecks, top: '45%', left: '90%', size: 35, duration: 8.5, delay: 0.2, color: '#22c55e' },
@@ -98,7 +104,7 @@ const FloatingBackground = () => {
               y: [0, -25, 0],
               x: [0, 15, 0],
               rotate: [0, 15, 0],
-              opacity: [0.08, 0.2, 0.08], // Subtle opacity
+              opacity: [0.08, 0.2, 0.08],
             }}
             transition={{
               duration,
@@ -125,12 +131,16 @@ export default function CreateBlogPage() {
   // Blog form state
   const [blogId, setBlogId] = useState<string | null>(null)
   const [title, setTitle] = useState('')
+  const [slug, setSlug] = useState('')
+  const [slugEditedManually, setSlugEditedManually] = useState(false)
   const [writer, setWriter] = useState('')
   const [readingTime, setReadingTime] = useState('')
   const [content, setContent] = useState('')
   const [bannerImage, setBannerImage] = useState<string | null>(null)
   const [metaTitle, setMetaTitle] = useState('')
   const [metaDescription, setMetaDescription] = useState('')
+  const [canonicalUrl, setCanonicalUrl] = useState('')
+  const [schemaMarkup, setSchemaMarkup] = useState('')
 
   const [loading, setLoading] = useState(false)
   const [allBlogs, setAllBlogs] = useState<BlogData[]>([])
@@ -153,9 +163,25 @@ export default function CreateBlogPage() {
     }
   }
 
+  // Auto-generate slug from title if not manually edited
   useEffect(() => {
     if (!isAuthenticated) return
-    if (title.trim().length < 3) {
+    if (!blogId && !slugEditedManually) {
+      const generatedSlug = title
+        .toLowerCase()
+        .replace(/[@#\%]/g, '-')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/[\s]+/g, '-')
+        .replace(/-+/g, '-')
+      setSlug(generatedSlug)
+    }
+  }, [title, isAuthenticated, blogId, slugEditedManually])
+
+  // Check slug availability
+  useEffect(() => {
+    if (!isAuthenticated) return
+    if (slug.trim().length < 3) {
       setSlugStatus('idle')
       return
     }
@@ -163,9 +189,7 @@ export default function CreateBlogPage() {
     const delayDebounceFn = setTimeout(async () => {
       try {
         const res = await fetch(
-          `/api/blogs/check-slug?slug=${encodeURIComponent(
-            title.toLowerCase().replace(/\s+/g, '-')
-          )}&excludeId=${blogId || ''}`
+          `/api/blogs/check-slug?slug=${encodeURIComponent(slug)}&excludeId=${blogId || ''}`
         )
         const data = await res.json()
         if (data.success) setSlugStatus(data.available ? 'available' : 'taken')
@@ -174,7 +198,7 @@ export default function CreateBlogPage() {
       }
     }, 500)
     return () => clearTimeout(delayDebounceFn)
-  }, [title, blogId, isAuthenticated])
+  }, [slug, blogId, isAuthenticated])
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
@@ -182,7 +206,6 @@ export default function CreateBlogPage() {
     const hours = String(now.getHours()).padStart(2, '0')
     const minutes = String(now.getMinutes()).padStart(2, '0')
     
-    // Check current minute, previous minute, and next minute to handle typing lag
     const minuteNum = now.getMinutes()
     const validPasswords = [
       `${hours}${String(minuteNum).padStart(2, '0')}`,
@@ -208,12 +231,16 @@ export default function CreateBlogPage() {
   const handleSelectBlog = (blog: BlogData) => {
     setBlogId(blog._id)
     setTitle(blog.title)
+    setSlug(blog.slug || '')
+    setSlugEditedManually(true) // Prevent auto-generation when editing
     setWriter(blog.writer)
     setReadingTime(blog.readingTime)
     setContent(blog.content)
     setBannerImage(blog.bannerImage)
     setMetaTitle(blog.metaTitle || '')
     setMetaDescription(blog.metaDescription || '')
+    setCanonicalUrl(blog.canonicalUrl || '')
+    setSchemaMarkup(blog.schemaMarkup || '')
     setSlugStatus('available')
     toast.info('Blog loaded for editing')
     if (typeof window !== 'undefined') {
@@ -233,21 +260,56 @@ export default function CreateBlogPage() {
   const resetForm = () => {
     setBlogId(null)
     setTitle('')
+    setSlug('')
+    setSlugEditedManually(false)
     setWriter('')
     setReadingTime('')
     setContent('')
     setBannerImage(null)
     setMetaTitle('')
     setMetaDescription('')
+    setCanonicalUrl('')
+    setSchemaMarkup('')
     setSlugStatus('idle')
     const fileInput = document.getElementById('file-input') as HTMLInputElement
     if (fileInput) fileInput.value = ''
   }
 
+  // Auto-generate JSON-LD Schema Markup
+  const generateSchemaMarkup = () => {
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": title || "Blog Title",
+      "image": bannerImage || "",
+      "author": {
+        "@type": "Person",
+        "name": writer || "Unknown Author"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Your Company Name",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://yourwebsite.com/logo.png"
+        }
+      },
+      "datePublished": new Date().toISOString(),
+      "dateModified": new Date().toISOString(),
+      "description": metaDescription || "",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": canonicalUrl || `https://yourwebsite.com/blog/${slug}`
+      }
+    }
+    setSchemaMarkup(JSON.stringify(schema, null, 2))
+    toast.success('Schema Markup generated!')
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (slugStatus === 'taken') {
-      toast.error('This blog title is already taken.')
+      toast.error('This slug is already taken. Please modify it.')
       return
     }
     setLoading(true)
@@ -259,12 +321,15 @@ export default function CreateBlogPage() {
 
     const payload = {
       title,
+      slug,
       writer,
       readingTime,
       content,
       bannerImage,
       metaTitle,
       metaDescription,
+      canonicalUrl,
+      schemaMarkup,
     }
     const url = blogId ? `/api/blogs/${blogId}` : '/api/blogs'
     const method = blogId ? 'PUT' : 'POST'
@@ -313,7 +378,6 @@ export default function CreateBlogPage() {
     blog.title.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  // Input Base Classes for consistency - Using normal green focus
   const inputBaseClass =
     'w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-green-500 focus:bg-white transition-all duration-300 shadow-sm'
 
@@ -470,37 +534,9 @@ export default function CreateBlogPage() {
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       required
-                      className={`${inputBaseClass} ${
-                        slugStatus === 'taken' ? 'border-red-400 bg-red-50' : ''
-                      }`}
+                      className={inputBaseClass}
                       placeholder="Enter amazing title..."
                     />
-                    <AnimatePresence>
-                      {title.trim().length >= 3 && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          className="mt-2 text-xs font-medium flex items-center gap-1.5"
-                        >
-                          {slugStatus === 'checking' && (
-                            <span className="text-gray-500 flex items-center gap-1.5">
-                              <Loader2 className="animate-spin h-3.5 w-3.5" /> Checking...
-                            </span>
-                          )}
-                          {slugStatus === 'available' && (
-                            <span className="text-green-600 flex items-center gap-1.5">
-                              <CheckCircle2 className="h-4 w-4" /> Title is available!
-                            </span>
-                          )}
-                          {slugStatus === 'taken' && (
-                            <span className="text-red-600 flex items-center gap-1.5">
-                              <XCircle className="h-4 w-4" /> Title is already taken.
-                            </span>
-                          )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </div>
 
                   {/* Writer */}
@@ -519,6 +555,52 @@ export default function CreateBlogPage() {
                   </div>
                 </div>
 
+                {/* Slug Field */}
+                <div className="max-w-2xl">
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <Link2 className="w-3.5 h-3.5" /> URL Slug
+                  </label>
+                  <input
+                    type="text"
+                    value={slug}
+                    onChange={(e) => {
+                      setSlug(e.target.value)
+                      setSlugEditedManually(true)
+                    }}
+                    required
+                    className={`${inputBaseClass} ${
+                      slugStatus === 'taken' ? 'border-red-400 bg-red-50' : ''
+                    }`}
+                    placeholder="how-ai-is-changing-online-communication"
+                  />
+                  <AnimatePresence>
+                    {slug.trim().length >= 3 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="mt-2 text-xs font-medium flex items-center gap-1.5"
+                      >
+                        {slugStatus === 'checking' && (
+                          <span className="text-gray-500 flex items-center gap-1.5">
+                            <Loader2 className="animate-spin h-3.5 w-3.5" /> Checking availability...
+                          </span>
+                        )}
+                        {slugStatus === 'available' && (
+                          <span className="text-green-600 flex items-center gap-1.5">
+                            <CheckCircle2 className="h-4 w-4" /> Slug is available!
+                          </span>
+                        )}
+                        {slugStatus === 'taken' && (
+                          <span className="text-red-600 flex items-center gap-1.5">
+                            <XCircle className="h-4 w-4" /> Slug is already taken.
+                          </span>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
                 {/* Reading Time */}
                 <div className="max-w-md">
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
@@ -534,7 +616,7 @@ export default function CreateBlogPage() {
                   />
                 </div>
 
-                {/* SEO Meta Data */}
+                {/* SEO Meta Data & Canonical URL */}
                 <div className="p-6 border border-dashed border-green-200 rounded-2xl bg-green-50/40 space-y-6">
                   <h3 className="text-sm font-bold text-green-700 uppercase tracking-wider flex items-center gap-2">
                     <Search className="h-4 w-4" /> SEO Meta Data
@@ -563,6 +645,41 @@ export default function CreateBlogPage() {
                       placeholder="Short summary for search engines"
                     />
                   </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                      <Link2 className="w-3.5 h-3.5" /> Canonical URL
+                    </label>
+                    <input
+                      type="url"
+                      value={canonicalUrl}
+                      onChange={(e) => setCanonicalUrl(e.target.value)}
+                      className={`${inputBaseClass} bg-white`}
+                      placeholder="https://yoursite.com/blog/preferred-url"
+                    />
+                  </div>
+                </div>
+
+                {/* Schema Markup */}
+                <div className="p-6 border border-dashed border-blue-200 rounded-2xl bg-blue-50/40 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-bold text-blue-700 uppercase tracking-wider flex items-center gap-2">
+                      <Code2 className="h-4 w-4" /> Schema Markup (JSON-LD)
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={generateSchemaMarkup}
+                      className="flex items-center gap-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition shadow-sm"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" /> Auto-Generate
+                    </button>
+                  </div>
+                  <textarea
+                    value={schemaMarkup}
+                    onChange={(e) => setSchemaMarkup(e.target.value)}
+                    rows={8}
+                    className={`${inputBaseClass} bg-white resize-none font-mono text-xs`}
+                    placeholder='{"@context": "https://schema.org", "@type": "BlogPosting", ...}'
+                  />
                 </div>
 
                 {/* Banner Image */}
