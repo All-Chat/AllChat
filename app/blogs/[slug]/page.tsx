@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Metadata } from 'next'
 import { connectDB } from '@/lib/mongodb'
 import Blog from '@/models/Blog'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import BlogContent from '@/components/BlogContent' // Import the new component
+import BlogContent from '@/components/BlogContent'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,7 +29,11 @@ export async function generateMetadata({
 
   return {
     title: blog.metaTitle || blog.title,
-    description: blog.metaDescription || blog.content.substring(0, 150),
+    description: blog.metaDescription || blog.content?.substring(0, 150) || '',
+    // ✅ INJECT CANONICAL URL INTO THE <HEAD>
+    alternates: {
+      canonical: blog.canonicalUrl || `/blog/${blog.slug}`,
+    }
   }
 }
 
@@ -37,7 +42,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
   const { slug } = await params
   await connectDB()
 
-  const blog = await Blog.findOne({ slug }).lean()
+  const blog = await Blog.findOne({ slug }).lean() as any
 
   if (!blog) {
     notFound()
@@ -57,7 +62,15 @@ export default async function BlogDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-[#eef2f5] pt-24 pb-20 font-sans flex justify-center">
-      {/* Increased wrapper width to 5xl */}
+      
+      {/* ✅ INJECT SCHEMA MARKUP (JSON-LD) INTO THE HTML FOR GOOGLE */}
+      {blog.schemaMarkup && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: blog.schemaMarkup }}
+        />
+      )}
+
       <div className="w-full max-w-5xl mx-auto px-4 sm:px-10">
 
         {/* Back Button */}
