@@ -21,8 +21,10 @@ export async function POST(request: NextRequest) {
     await connectDB()
     const body = await request.json()
 
-    // --- CLEAN SLUG LOGIC (No random string) ---
-    const baseSlug = body.title
+    // --- CLEAN SLUG LOGIC ---
+    // Use the custom slug provided by the user, or fallback to the title if empty
+    const rawSlug = body.slug || body.title;
+    const baseSlug = rawSlug
       .toLowerCase()
       .replace(/[@#\%]/g, '-')       // Replace @, #, % with hyphens
       .replace(/[^a-z0-9\s-]/g, '')  // Remove any other special characters
@@ -40,7 +42,7 @@ export async function POST(request: NextRequest) {
     // Handle duplicate slug errors gracefully
     if (error.code === 11000 && error.keyPattern?.slug) {
       return NextResponse.json(
-        { success: false, error: 'A blog with this exact title already exists. Please change the title.' },
+        { success: false, error: 'A blog with this slug already exists. Please use a different slug or title.' },
         { status: 400 }
       )
     }
@@ -48,6 +50,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: message }, { status: 500 })
   }
 }
+
 // Add this at the very bottom of your app/api/blogs/route.ts file
 export const routeSegmentConfig = {
   api: {
