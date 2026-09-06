@@ -22,9 +22,14 @@ export default function RichTextEditor({ isOpen, onClose, content, setContent }:
     rotation: number;
   }>({ target: null, rotation: 0 })
 
+  // ✅ NEW: HTML Code Mode State
+  const [isHtmlMode, setIsHtmlMode] = useState(false)
+  const [rawHtml, setRawHtml] = useState('')
+
   useEffect(() => {
     if (isOpen && editorRef.current) {
       editorRef.current.innerHTML = content
+      setRawHtml(content) // Sync raw html state on open
       editorRef.current.querySelectorAll('.free-img-wrapper').forEach(el => {
         const wrapper = el as HTMLDivElement
         const matrix = new DOMMatrixReadOnly(window.getComputedStyle(wrapper).transform)
@@ -70,6 +75,30 @@ export default function RichTextEditor({ isOpen, onClose, content, setContent }:
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
     setMenuPos({ x: rect.right + 10, y: rect.top })
     setOpenMenu(menu)
+  }
+
+  // ✅ NEW: Toggle between Visual and HTML Code Mode
+  const toggleHtmlMode = () => {
+    if (!isHtmlMode) {
+      // Switching to HTML Code Mode
+      if (editorRef.current) {
+        setRawHtml(editorRef.current.innerHTML)
+      }
+      setIsHtmlMode(true)
+    } else {
+      // Switching back to Visual Mode
+      if (editorRef.current) {
+        editorRef.current.innerHTML = rawHtml
+        // Re-attach drag handlers for images after DOM replacement
+        editorRef.current.querySelectorAll('.free-img-wrapper').forEach(el => {
+          const wrapper = el as HTMLDivElement
+          const matrix = new DOMMatrixReadOnly(window.getComputedStyle(wrapper).transform)
+          const rot = Math.atan2(matrix.b, matrix.a) * (180 / Math.PI)
+          attachDragHandlers(wrapper, rot)
+        })
+      }
+      setIsHtmlMode(false)
+    }
   }
 
   const insertImageAtPosition = (src: string) => {
@@ -253,15 +282,20 @@ export default function RichTextEditor({ isOpen, onClose, content, setContent }:
     }
   }
 
+  // ✅ UPDATED: Save logic checks if we are in HTML mode
   const handleSave = () => {
-    if (editorRef.current) setContent(editorRef.current.innerHTML)
+    if (isHtmlMode) {
+      setContent(rawHtml)
+    } else if (editorRef.current) {
+      setContent(editorRef.current.innerHTML)
+    }
     onClose()
   }
 
-  // NEW: Clear everything inside the canvas
   const clearCanvas = () => {
     if (editorRef.current) {
       editorRef.current.innerHTML = ''
+      setRawHtml('')
       setImgState({ target: null, rotation: 0 })
     }
   }
@@ -310,7 +344,24 @@ export default function RichTextEditor({ isOpen, onClose, content, setContent }:
           Content Studio
         </h2>
         <div className="flex gap-2">
-          {/* Replaced HTML View with Clear & Close Buttons */}
+          {/* ✅ NEW: HTML Code Mode Toggle Button */}
+          <button 
+            onClick={toggleHtmlMode} 
+            className={`text-sm font-medium px-4 py-2 rounded-lg transition shadow-md flex items-center gap-2 ${isHtmlMode ? 'bg-yellow-400 text-black hover:bg-yellow-500' : 'bg-purple-500 text-white hover:bg-purple-600'}`}
+          >
+            {isHtmlMode ? (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                Visual Mode
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                HTML / Code Mode
+              </>
+            )}
+          </button>
+
           <button 
             onClick={clearCanvas} 
             className="text-sm bg-red-500 hover:bg-red-600 text-white font-medium px-4 py-2 rounded-lg transition shadow-md"
@@ -335,111 +386,132 @@ export default function RichTextEditor({ isOpen, onClose, content, setContent }:
       <div className="flex flex-1 overflow-hidden">
         
         {/* Light Theme Sidebar */}
-        <div className="w-24 bg-white border-r border-gray-200 flex flex-col items-center py-4 gap-2 shrink-0 overflow-y-auto custom-scroll shadow-sm">
-          
-          <button 
-            onClick={(e) => toggleMenu(e, 'block')}
-            className="w-20 h-12 flex flex-col items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h8M4 18h16" /></svg>
-            <span className="text-[10px] mt-1 font-medium">Style</span>
-          </button>
+        {!isHtmlMode && (
+          <div className="w-24 bg-white border-r border-gray-200 flex flex-col items-center py-4 gap-2 shrink-0 overflow-y-auto custom-scroll shadow-sm">
+            
+            <button 
+              onClick={(e) => toggleMenu(e, 'block')}
+              className="w-20 h-12 flex flex-col items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h8M4 18h16" /></svg>
+              <span className="text-[10px] mt-1 font-medium">Style</span>
+            </button>
 
-          <button 
-            onClick={(e) => toggleMenu(e, 'size')}
-            className="w-20 h-12 flex flex-col items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 20h4l4-12 4 12h4M8 14h8" /></svg>
-            <span className="text-[10px] mt-1 font-medium">Size</span>
-          </button>
+            <button 
+              onClick={(e) => toggleMenu(e, 'size')}
+              className="w-20 h-12 flex flex-col items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 20h4l4-12 4 12h4M8 14h8" /></svg>
+              <span className="text-[10px] mt-1 font-medium">Size</span>
+            </button>
 
-          <div className="w-12 border-t border-gray-100 my-2"></div>
+            <div className="w-12 border-t border-gray-100 my-2"></div>
 
-          <button onClick={() => exec('bold')} className="w-20 h-12 flex flex-col items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition font-bold text-base" title="Bold">
-            <span className="text-lg leading-none">B</span>
-            <span className="text-[10px] mt-1 font-medium">Bold</span>
-          </button>
-          <button onClick={() => exec('italic')} className="w-20 h-12 flex flex-col items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition italic text-base" title="Italic">
-            <span className="text-lg leading-none">I</span>
-            <span className="text-[10px] mt-1 font-medium">Italic</span>
-          </button>
-          <button onClick={() => exec('underline')} className="w-20 h-12 flex flex-col items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition underline text-base" title="Underline">
-            <span className="text-lg leading-none">U</span>
-            <span className="text-[10px] mt-1 font-medium">Underline</span>
-          </button>
+            <button onClick={() => exec('bold')} className="w-20 h-12 flex flex-col items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition font-bold text-base" title="Bold">
+              <span className="text-lg leading-none">B</span>
+              <span className="text-[10px] mt-1 font-medium">Bold</span>
+            </button>
+            <button onClick={() => exec('italic')} className="w-20 h-12 flex flex-col items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition italic text-base" title="Italic">
+              <span className="text-lg leading-none">I</span>
+              <span className="text-[10px] mt-1 font-medium">Italic</span>
+            </button>
+            <button onClick={() => exec('underline')} className="w-20 h-12 flex flex-col items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition underline text-base" title="Underline">
+              <span className="text-lg leading-none">U</span>
+              <span className="text-[10px] mt-1 font-medium">Underline</span>
+            </button>
 
-          <div className="w-12 border-t border-gray-100 my-2"></div>
+            <div className="w-12 border-t border-gray-100 my-2"></div>
 
-          <button 
-            onClick={(e) => toggleMenu(e, 'color')}
-            className="w-20 h-12 flex flex-col items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition"
-            title="Colors"
-          >
-            <span className="text-lg leading-none">A</span>
-            <span className="w-6 h-1 bg-red-500 rounded-sm mt-1"></span>
-          </button>
+            <button 
+              onClick={(e) => toggleMenu(e, 'color')}
+              className="w-20 h-12 flex flex-col items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition"
+              title="Colors"
+            >
+              <span className="text-lg leading-none">A</span>
+              <span className="w-6 h-1 bg-red-500 rounded-sm mt-1"></span>
+            </button>
 
-          <div className="w-12 border-t border-gray-100 my-2"></div>
+            <div className="w-12 border-t border-gray-100 my-2"></div>
 
-          <div className="flex flex-col gap-1">
-            <div className="flex gap-1">
-              <button onClick={() => exec('justifyLeft')} className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition" title="Align Left">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h10M4 18h16" /></svg>
-              </button>
-              <button onClick={() => exec('justifyCenter')} className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition" title="Align Center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M7 12h10M4 18h16" /></svg>
-              </button>
+            <div className="flex flex-col gap-1">
+              <div className="flex gap-1">
+                <button onClick={() => exec('justifyLeft')} className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition" title="Align Left">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h10M4 18h16" /></svg>
+                </button>
+                <button onClick={() => exec('justifyCenter')} className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition" title="Align Center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M7 12h10M4 18h16" /></svg>
+                </button>
+              </div>
+              <div className="flex gap-1">
+                <button onClick={() => exec('justifyRight')} className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition" title="Align Right">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M10 12h10M4 18h16" /></svg>
+                </button>
+                <button onClick={() => exec('justifyFull')} className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition" title="Justify">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </button>
+              </div>
             </div>
-            <div className="flex gap-1">
-              <button onClick={() => exec('justifyRight')} className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition" title="Align Right">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M10 12h10M4 18h16" /></svg>
-              </button>
-              <button onClick={() => exec('justifyFull')} className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition" title="Justify">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
-              </button>
-            </div>
+
+            <div className="w-12 border-t border-gray-100 my-2"></div>
+
+            <button 
+              onClick={() => {
+                const url = prompt('Enter URL (https://...)')
+                if (url) exec('createLink', url)
+              }} 
+              className="w-20 h-12 flex flex-col items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition" title="Insert Link"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+              <span className="text-[10px] mt-1 font-medium">Link</span>
+            </button>
+
+            <label title="Upload Image" className="w-20 h-12 flex flex-col items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition cursor-pointer relative">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              <span className="text-[10px] mt-1 font-medium">Image</span>
+              <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
+            </label>
+
           </div>
+        )}
 
-          <div className="w-12 border-t border-gray-100 my-2"></div>
+        {/* The Infinite Expanding Canvas Area / HTML View */}
+        <div className="flex-1 overflow-y-auto custom-scroll bg-[#eef2f5] flex justify-center p-4 sm:p-10 items-start relative">
+          {/* ✅ NEW: HTML Code Textarea */}
+          {isHtmlMode && (
+            <textarea
+              value={rawHtml}
+              onChange={(e) => setRawHtml(e.target.value)}
+              className="w-full max-w-4xl h-full min-h-[80vh] p-6 font-mono text-sm bg-gray-900 text-green-400 rounded-2xl shadow-2xl border border-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="<div style='padding: 20px; background: #f0f0f0;'>Paste HTML/CSS code here...</div>"
+            />
+          )}
 
-          <button 
-            onClick={() => {
-              const url = prompt('Enter URL (https://...)')
-              if (url) exec('createLink', url)
-            }} 
-            className="w-20 h-12 flex flex-col items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition" title="Insert Link"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-            <span className="text-[10px] mt-1 font-medium">Link</span>
-          </button>
-
-          <label title="Upload Image" className="w-20 h-12 flex flex-col items-center justify-center text-gray-500 hover:text-[#075E54] hover:bg-[#f0f2f5] rounded-lg transition cursor-pointer relative">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-            <span className="text-[10px] mt-1 font-medium">Image</span>
-            <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
-          </label>
-
-        </div>
-
-        {/* The Infinite Expanding Canvas Area */}
-        <div className="flex-1 overflow-y-auto custom-scroll bg-[#eef2f5] flex justify-center p-4 sm:p-10 items-start">
+          {/* Visual Canvas */}
           <div
             ref={editorRef}
-            contentEditable
+            contentEditable={!isHtmlMode}
             onDrop={handleDrop}
             onDragOver={(e) => e.preventDefault()}
             onClick={handleEditorClick}
             className="editor-canvas relative bg-white w-full max-w-4xl mx-auto min-h-[80vh] shadow-2xl p-4 sm:p-16 rounded-3xl border border-gray-100 overflow-hidden focus:outline-none"
-            style={{ lineHeight: '1.8', fontSize: '18px' }}
+            style={{ lineHeight: '1.8', fontSize: '18px', display: isHtmlMode ? 'none' : 'block' }}
           />
         </div>
 
         {/* Floating Dropdown Menus (Light Theme) */}
-        {openMenu && menuPos && (
+        {openMenu && menuPos && !isHtmlMode && (
           <div className="fixed z-[2000] shadow-2xl" style={{ top: `${menuPos.y}px`, left: `${menuPos.x}px` }} onClick={(e) => e.stopPropagation()}>
+            {/* ✅ NEW: Added H4 and H5 to block menu */}
             {openMenu === 'block' && (
               <div className="bg-white border border-gray-200 rounded-lg py-2 w-48">
-                {[{v:'p', l:'Normal Text'}, {v:'h1', l:'Heading 1'}, {v:'h2', l:'Heading 2'}, {v:'h3', l:'Heading 3'}].map(opt => (
+                {[
+                  {v:'p', l:'Normal Text'}, 
+                  {v:'h1', l:'Heading 1'}, 
+                  {v:'h2', l:'Heading 2'}, 
+                  {v:'h3', l:'Heading 3'},
+                  {v:'h4', l:'Heading 4'},
+                  {v:'h5', l:'Heading 5'}
+                ].map(opt => (
                   <button key={opt.v} onClick={() => exec('formatBlock', opt.v)} className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-[#f0f2f5] hover:text-[#075E54] text-sm">{opt.l}</button>
                 ))}
               </div>
@@ -471,7 +543,7 @@ export default function RichTextEditor({ isOpen, onClose, content, setContent }:
         )}
 
         {/* Floating Image Resize & Rotate Handles */}
-        {imgState.target && (
+        {imgState.target && !isHtmlMode && (
           <>
             <div className="resize-handle" style={{ left: getHandlePos('nw').x - 6, top: getHandlePos('nw').y - 6, cursor: 'nwse-resize' }} onMouseDown={(e) => startResize(e, 'nw')} />
             <div className="resize-handle" style={{ left: getHandlePos('ne').x - 6, top: getHandlePos('ne').y - 6, cursor: 'nesw-resize' }} onMouseDown={(e) => startResize(e, 'ne')} />
