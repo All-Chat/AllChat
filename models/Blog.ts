@@ -7,9 +7,12 @@ const BlogSchema = new mongoose.Schema({
   readingTime: { type: String, required: true },
   content: { type: String, required: true },
   bannerImage: { type: String, required: true },
-  // NEW FIELDS FOR SEO:
-  metaTitle: { type: String, required: false },
-  metaDescription: { type: String, required: false },
+  
+  // SEO FIELDS:
+  metaTitle: { type: String, default: '' },
+  metaDescription: { type: String, default: '' },
+  canonicalUrl: { type: String, default: '' },       // ✅ ADDED
+  schemaMarkup: { type: String, default: '' },       // ✅ ADDED
 }, {
   timestamps: true,
 });
