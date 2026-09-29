@@ -160,7 +160,17 @@ export default function HomePage() {
     "Start managing customer conversations.",
   ];
 
-  const industries = ["Automotive", "Retail", "Healthcare", "Education", "Real Estate", "Logistics", "E-commerce", "Professional Services", "And Many more"];
+  const industries = [
+    { label: "Automotive", href: "/automotive" },
+    { label: "Retail", href: "#" },
+    { label: "Healthcare", href: "#" },
+    { label: "Education", href: "#" },
+    { label: "Real Estate", href: "#" },
+    { label: "Logistics", href: "#" },
+    { label: "E-commerce", href: "#" },
+    { label: "Professional Services", href: "#" },
+    { label: "And Many more", href: "#" },
+  ];
 
   const benefits = ["Easy onboarding", "Shared inbox", "Automation", "Team collaboration", "Reporting", "Secure infrastructure", "Scalable platform"];
 
@@ -313,10 +323,13 @@ export default function HomePage() {
           </FadeIn>
           <div className="flex flex-wrap justify-center gap-4">
             {industries.map((ind, i) => (
-              <FadeIn key={ind} delay={i * 0.05}>
-                <div className="bg-white p-4 md:p-5 px-6 md:px-8 rounded-full text-center shadow-[0_4px_15px_rgb(0,0,0,0.03)] border border-black/5 hover:border-[#25D366]/40 hover:shadow-[0_10px_25px_rgb(37,211,102,0.1)] hover:-translate-y-1 transition-all duration-300 cursor-pointer">
-                  <p className="font-semibold text-sm md:text-base text-gray-600 hover:text-[#075E54] transition-colors">{ind}</p>
-                </div>
+              <FadeIn key={ind.label} delay={i * 0.05}>
+                <a 
+                  href={ind.href}
+                  className="block bg-white p-4 md:p-5 px-6 md:px-8 rounded-full text-center shadow-[0_4px_15px_rgb(0,0,0,0.03)] border border-black/5 hover:border-[#25D366]/40 hover:shadow-[0_10px_25px_rgb(37,211,102,0.1)] hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                >
+                  <p className="font-semibold text-sm md:text-base text-gray-600 hover:text-[#075E54] transition-colors">{ind.label}</p>
+                </a>
               </FadeIn>
             ))}
           </div>
