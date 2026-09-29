@@ -47,6 +47,9 @@ import {
   Tag,
   Paperclip,
   MoreVertical,
+  Star,
+  ChevronLeft,
+  ChevronRight,
   Check,
   type LucideIcon,
 } from 'lucide-react';
@@ -224,8 +227,61 @@ export default function AllChatPage() {
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
   const [openFaq, setOpenFaq] = useState<number>(-1);
   const [navScrolled, setNavScrolled] = useState<boolean>(false);
+  const [activeTestimonial, setActiveTestimonial] = useState<number>(0);
+
+  const testimonials = [
+    { 
+      name: 'Sameer Sir', 
+      role: 'Berkeley Motors', 
+      message: 'Ever since we implemented AllChat at Berkeley Motors, our customer response time has dropped to seconds. The AI bot schedules test drives at 2 AM while we sleep. It\'s like having a night shift sales team without the overhead.' 
+    },
+    { 
+      name: 'Vikas ji', 
+      role: 'Tata Motors', 
+      message: 'At Tata Motors, handling bulk inquiries during new launches used to crash our standard WhatsApp. AllChat\'s official API setup meant we handled over 5,000 messages on launch day without a single delivery failure.' 
+    },
+    { 
+      name: 'Rajesh Sharma', 
+      role: 'Jawa Ambala', 
+      message: 'For a premium brand like Jawa, customer experience is everything. AllChat\'s shared inbox lets our floor managers and service team stay on the same page. Automated service reminders have reduced our no-shows by 60%.' 
+    },
+    { 
+      name: 'Rohit Jindal', 
+      role: 'Automobile Dealer', 
+      message: 'Managing walk-in follow-ups was a mess of spreadsheets. Now, AllChat automatically follows up with showroom visitors after 3 days. We saw a 25% bump in conversion rates in the first quarter itself.' 
+    },
+    { 
+      name: 'Prince Tripathi', 
+      role: 'Multi-Branch Dealer', 
+      message: 'I run multiple dealerships and keeping track of leads across locations was tough. The CRM integration automatically routes WhatsApp leads to the nearest branch manager instantly. It\'s completely changed how we operate.' 
+    },
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveTestimonial((prev) => (prev === testimonials.length - 1 ? 0 : prev + 1));
+    }, 4000); // Auto-scroll every 4 seconds
+    return () => clearInterval(interval);
+  }, [testimonials.length]);
 
   /* ── Effects ── */
+    /* ── Hide Global Navbar from layout.tsx ── */
+  useEffect(() => {
+    // Find the global Navbar element (usually a <header> or <nav> tag)
+    const globalNavbar = document.querySelector<HTMLElement>('header, nav');
+    
+    if (globalNavbar) {
+      // Hide it
+      globalNavbar.style.display = 'none';
+    }
+
+    return () => {
+      // Restore it when leaving the page
+      if (globalNavbar) {
+        globalNavbar.style.display = '';
+      }
+    };
+  }, []);
   useEffect(() => {
     document.title =
       'AllChat — Grow Your Business with Official WhatsApp API & AI Automation';
@@ -699,7 +755,7 @@ export default function AllChatPage() {
         }
       `}</style>
 
-      {/* ═══════════ NAV ═══════════
+      {/* ═══════════ NAV ═══════════ */}
       <header
         id="nav"
         className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
@@ -710,12 +766,12 @@ export default function AllChatPage() {
           <div className="flex items-center justify-between h-16 md:h-20">
             <a href="#" className="flex items-center gap-2.5 group">
               <img
-                src="https://placehold.co/120x40/075E54/FFFFFF?text=AllChat&font=montserrat"
+                src="/logo.svg"
                 alt="AllChat Logo"
                 className="logo-img"
               />
             </a>
-            <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[var(--muted)]">
+            {/* <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[var(--muted)]">
               <a href="#why" className="link-u hover:text-[var(--accent-deep)] transition">
                 Why AllChat
               </a>
@@ -731,7 +787,7 @@ export default function AllChatPage() {
               <a href="#faq" className="link-u hover:text-[var(--accent-deep)] transition">
                 FAQ
               </a>
-            </nav>
+            </nav> */}
             <div className="flex items-center gap-3">
               <button
                 onClick={openModal}
@@ -742,7 +798,7 @@ export default function AllChatPage() {
             </div>
           </div>
         </div>
-      </header> */}
+      </header>
 
       {/* ═══════════ HERO ═══════════ */}
       <section className="relative pt-32 md:pt-40 pb-20 md:pb-28 overflow-hidden mesh">
@@ -1461,141 +1517,259 @@ export default function AllChatPage() {
         </div>
       </section>
 
-      {/* ═══════════ CRM INTEGRATION ═══════════ */}
+            {/* ═══════════ TESTIMONIALS ═══════════ */}
       <section
-        id="crm-integration"
+        id="testimonials"
         className="relative py-20 md:py-28 bg-[var(--bg)] overflow-hidden"
       >
         <div className="absolute inset-0 grid-lines opacity-40 pointer-events-none" />
         <div className="absolute top-1/4 -left-20 w-80 h-80 bg-emerald-300/20 rounded-full blur-3xl floaty-slow" />
 
         <div className="relative max-w-7xl mx-auto px-5 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left — UI mockup */}
-            <div className="reveal relative order-2 lg:order-1">
-              <div className="card p-6 shadow-xl bg-white relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)]" />
+          <div className="reveal text-center max-w-3xl mx-auto mb-16">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-[var(--accent-deep)] text-xs font-semibold mb-4">
+              <Star className="w-3.5 h-3.5" /> Testimonials
+            </div>
+            <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl leading-tight">
+              Loved by <span className="text-gradient">Indian Businesses</span>
+            </h2>
+            <p className="mt-5 text-[var(--muted)] text-base sm:text-lg">
+              See what business owners and teams across India are saying about AllChat.
+            </p>
+          </div>
 
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-2">
-                    <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
-                      <TableIcon className="w-4 h-4 text-[var(--accent-2)]" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-[var(--fg)]">Lead Pipeline</div>
-                      <div className="text-[10px] text-gray-400">
-                        Synced with Google Sheets
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 text-[10px] font-semibold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
-                  </div>
-                </div>
+          {/* Carousel Container */}
+          <div className="relative h-[420px] sm:h-[360px] flex items-center justify-center">
+            
+            {/* Cards */}
+            <div className="relative w-full h-full flex items-center justify-center">
+              {testimonials.map((t, i) => {
+                // Calculate position relative to active index
+                let position = i - activeTestimonial;
+                if (position > testimonials.length / 2) position -= testimonials.length;
+                if (position < -testimonials.length / 2) position += testimonials.length;
 
-                <div className="grid grid-cols-3 gap-4">
-                  {/* New Lead */}
-                  <div>
-                    <div className="text-[11px] font-bold text-gray-500 uppercase mb-2 flex justify-between">
-                      <span>New Lead</span>
-                      <span className="bg-gray-100 px-1.5 rounded">3</span>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="bg-gray-50 p-2 rounded-lg border border-gray-100 shadow-sm">
-                        <div className="text-[11px] font-bold text-gray-800">Rohit S.</div>
-                        <div className="text-[10px] text-gray-500">+91 98XXXX...</div>
-                        <div className="mt-1 flex items-center gap-1 text-[9px] text-emerald-500">
-                          <MessageCircle className="w-2.5 h-2.5" /> WA Received
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Contacted */}
-                  <div>
-                    <div className="text-[11px] font-bold text-gray-500 uppercase mb-2 flex justify-between">
-                      <span>Contacted</span>
-                      <span className="bg-gray-100 px-1.5 rounded">5</span>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="bg-emerald-50 p-2 rounded-lg border border-emerald-100 shadow-sm">
-                        <div className="text-[11px] font-bold text-gray-800">Priya Sharma</div>
-                        <div className="text-[10px] text-[var(--accent-2)]">
-                          Test Drive Booked
-                        </div>
-                        <div className="mt-1 flex items-center gap-1 text-[9px] text-emerald-600">
-                          <Check className="w-2.5 h-2.5" /> Synced to CRM
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Won */}
-                  <div>
-                    <div className="text-[11px] font-bold text-gray-500 uppercase mb-2 flex justify-between">
-                      <span>Won</span>
-                      <span className="bg-gray-100 px-1.5 rounded">2</span>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
-                        <div className="text-[11px] font-bold text-gray-800">Amit Verma</div>
-                        <div className="text-[10px] text-gray-500">Car Booked 🎉</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                let style: React.CSSProperties = {
+                  transform: 'scale(0.5)',
+                  opacity: 0,
+                  zIndex: 0,
+                  filter: 'blur(10px)',
+                  pointerEvents: 'none',
+                };
 
-              {/* Floating WhatsApp bubble */}
-              <div className="absolute -bottom-8 -right-6 w-56 bg-white rounded-2xl shadow-xl border border-emerald-100 p-3 floaty hidden sm:block">
-                <div className="flex items-center gap-2.5 mb-1">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-deep)] flex items-center justify-center text-white text-xs font-bold">
-                    P
+                if (position === 0) {
+                  style = { transform: 'translateX(0) scale(1)', opacity: 1, zIndex: 10, filter: 'blur(0px)', pointerEvents: 'auto' };
+                } else if (position === -1) {
+                  style = { transform: 'translateX(-110%) scale(0.85)', opacity: 0.4, zIndex: 5, filter: 'blur(2px)', pointerEvents: 'none' };
+                } else if (position === 1) {
+                  style = { transform: 'translateX(110%) scale(0.85)', opacity: 0.4, zIndex: 5, filter: 'blur(2px)', pointerEvents: 'none' };
+                } else if (position === -2) {
+                  style = { transform: 'translateX(-200%) scale(0.7)', opacity: 0, zIndex: 1, filter: 'blur(4px)', pointerEvents: 'none' };
+                } else if (position === 2) {
+                  style = { transform: 'translateX(200%) scale(0.7)', opacity: 0, zIndex: 1, filter: 'blur(4px)', pointerEvents: 'none' };
+                }
+
+                return (
+                  <div
+                    key={i}
+                    className="absolute w-[90%] sm:w-[450px] bg-white p-8 rounded-3xl border border-[var(--border)] shadow-xl transition-all duration-500 ease-in-out"
+                    style={style}
+                  >
+                    {/* Card Content */}
+                    <div className="flex items-center gap-4 mb-5">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-deep)] flex items-center justify-center text-white text-xl font-bold shrink-0">
+                        {t.name.charAt(0)}
+                      </div>
+                      <div>
+                        <h4 className="font-display font-bold text-lg text-[var(--fg)]">{t.name}</h4>
+                        <p className="text-sm text-[var(--muted)]">{t.role}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1 mb-4">
+                      {[...Array(5)].map((_, idx) => (
+                        <Star key={idx} className="w-5 h-5 fill-[#FFB400] text-[#FFB400]" />
+                      ))}
+                    </div>
+                    <p className="text-base text-[var(--muted)] leading-relaxed">
+                      &ldquo;{t.message}&rdquo;
+                    </p>
                   </div>
-                  <div>
-                    <div className="text-xs font-bold text-gray-800">Priya Sharma</div>
-                    <div className="text-[10px] text-emerald-500">Added to CRM</div>
-                  </div>
-                </div>
-                <div className="text-[10px] text-gray-500 italic">
-                  &quot;I want to book a test drive...&quot;
-                </div>
-                <div className="mt-2 flex items-center justify-end gap-1">
-                  <Plug className="w-3 h-3 text-emerald-500" />
-                  <span className="text-[9px] font-bold text-emerald-500">API Synced</span>
-                </div>
-              </div>
+                );
+              })}
             </div>
 
-            {/* Right — text */}
-            <div className="reveal order-1 lg:order-2" style={{ transitionDelay: '0.1s' }}>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-[var(--accent-deep)] text-xs font-semibold mb-4">
-                <Plug className="w-3.5 h-3.5" /> CRM &amp; Lead Integration
-              </div>
-              <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl leading-tight">
-                Connect WhatsApp to <span className="text-gradient">Your CRM</span>
-              </h2>
-              <p className="mt-5 text-[var(--muted)] text-base sm:text-lg">
-                Never lose a lead again. Automatically sync every WhatsApp conversation directly to
-                Google Sheets, your CRM, or custom APIs via Webhooks.
-              </p>
+            {/* Arrows */}
+            <button 
+              onClick={() => setActiveTestimonial((prev) => (prev === 0 ? testimonials.length - 1 : prev - 1))}
+              className="absolute left-2 sm:left-10 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white border border-gray-100 shadow-lg flex items-center justify-center text-[var(--accent-2)] hover:bg-emerald-50 transition"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <button 
+              onClick={() => setActiveTestimonial((prev) => (prev === testimonials.length - 1 ? 0 : prev + 1))}
+              className="absolute right-2 sm:right-10 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white border border-gray-100 shadow-lg flex items-center justify-center text-[var(--accent-2)] hover:bg-emerald-50 transition"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </div>
 
-              <div className="mt-8 grid sm:grid-cols-2 gap-5">
-                {crmFeatures.map(({ icon: Icon, title, desc }) => (
-                  <div key={title} className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
-                      <Icon className="w-5 h-5 text-[var(--accent-2)]" />
+          {/* Dots */}
+          <div className="flex justify-center gap-2 mt-8">
+            {testimonials.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveTestimonial(i)}
+                className={`h-2.5 rounded-full transition-all duration-300 ${
+                  activeTestimonial === i ? 'w-8 bg-[var(--accent-2)]' : 'w-2.5 bg-gray-300 hover:bg-gray-400'
+                }`}
+              />
+            ))}
+          </div>
+
+        </div>
+      </section>
+            {/* ═══════════ PRICING ═══════════ */}
+      <section id="pricing" className="relative py-20 md:py-28 bg-[var(--bg-soft)] overflow-hidden">
+        <div className="absolute inset-0 doodle-bg opacity-60 pointer-events-none" />
+        <div className="absolute top-20 right-0 w-80 h-80 bg-emerald-300/30 rounded-full blur-3xl floaty-slow" />
+
+        <div className="relative max-w-7xl mx-auto px-5 lg:px-8">
+          <div className="reveal text-center max-w-3xl mx-auto mb-16">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white text-[var(--accent-deep)] text-xs font-semibold mb-4 border border-emerald-200">
+              <Sparkles className="w-3.5 h-3.5" /> Pricing
+            </div>
+            <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl leading-tight">
+              <span className="text-gradient">Plans</span>
+            </h2>
+          </div>
+
+          {/* Pricing Cards */}
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-start">
+
+            {/* Basic Plan */}
+            <div className="reveal card p-8 flex flex-col h-full">
+              <div className="text-center mb-8">
+                <h3 className="font-display font-bold text-xl text-[var(--fg)] mb-2">Basic Plan</h3>
+                <div className="flex items-baseline justify-center gap-1 mb-2">
+                  <span className="text-4xl font-extrabold text-[var(--accent-deep)]">₹5999</span>
+                  <span className="text-sm text-[var(--muted)] font-medium">yearly</span>
+                </div>
+                <p className="text-xs text-[var(--muted)]">For businesses getting started</p>
+              </div>
+              <div className="space-y-3 flex-1">
+                {[
+                  'WhatsApp Business API setup',
+                  '1 WhatsApp number',
+                  'WhatsApp live chat',
+                  'WhatsApp templates',
+                  'Basic campaign sending',
+                  'Prepaid WhatsApp wallet',
+                  'Delivery / Read / Reply tracking',
+                  'Prepaid WhatsApp wallet',
+                  'Email support',
+                ].map((feature) => (
+                  <div key={feature} className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+                      <Check className="w-3 h-3 text-[var(--accent-2)]" />
                     </div>
-                    <div>
-                      <h4 className="font-bold text-sm">{title}</h4>
-                      <p className="text-xs text-[var(--muted)] mt-0.5">{desc}</p>
-                    </div>
+                    <span className="text-sm text-[var(--muted)]">{feature}</span>
                   </div>
                 ))}
               </div>
+              <div className="mt-6 space-y-2">
+                <p className="text-xs text-[var(--muted)] text-center italic">
+                  Best for Small businesses &amp; testing
+                </p>
+                <p className="text-xs text-[var(--accent-2)] text-center bg-emerald-50 py-2 px-3 rounded-lg">
+                  Meta WhatsApp messaging charges are applicable separately.
+                </p>
+              </div>
             </div>
+
+            {/* Growth Plan */}
+            <div className="reveal card p-8 flex flex-col h-full" style={{ transitionDelay: '0.1s' }}>
+              <div className="text-center mb-8">
+                <h3 className="font-display font-bold text-xl text-[var(--fg)] mb-2">Growth Plan</h3>
+                <div className="flex items-baseline justify-center gap-1 mb-2">
+                  <span className="text-3xl font-extrabold text-[var(--accent-deep)]">₹12000</span>
+                  <span className="text-sm text-[var(--muted)] font-medium">/yearly</span>
+                </div>
+                <p className="text-xs text-[var(--muted)] mb-1">₹7200/6 Months | ₹4500/Quarterly</p>
+                <p className="text-xs text-[var(--muted)]">For businesses ready to generate leads</p>
+              </div>
+              <div className="space-y-3 flex-1">
+                <p className="text-sm font-semibold text-[var(--accent-deep)]">Everything in FREE, plus:</p>
+                {[
+                  '1 WhatsApp number',
+                  'Bulk WhatsApp Campaigns',
+                  'Campaign scheduling',
+                  '5 Tags',
+                  '5 Automation flows',
+                  'Campaign reports',
+                  'Higher campaign speed',
+                  'Exportable reports',
+                  'Priority support',
+                ].map((feature) => (
+                  <div key={feature} className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+                      <Check className="w-3 h-3 text-[var(--accent-2)]" />
+                    </div>
+                    <span className="text-sm text-[var(--muted)]">{feature}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-[var(--muted)] mt-6 text-center italic">
+                Best for Dealers, D2C brands, agencies &amp; growing businesses
+              </p>
+            </div>
+
+            {/* Pro Plan */}
+            <div className="reveal card p-8 flex flex-col h-full" style={{ transitionDelay: '0.2s' }}>
+              <div className="text-center mb-8">
+                <h3 className="font-display font-bold text-xl text-[var(--fg)] mb-2">Pro Plan</h3>
+                <div className="flex items-baseline justify-center gap-1 mb-2">
+                  <span className="text-3xl font-extrabold text-[var(--accent-deep)]">₹30000</span>
+                  <span className="text-sm text-[var(--muted)] font-medium">/yearly</span>
+                </div>
+                <p className="text-xs text-[var(--muted)] mb-1">₹16800/6 Months | ₹9000/Quarterly</p>
+                <p className="text-xs text-[var(--muted)]">For teams that want complete WhatsApp automation</p>
+              </div>
+              <div className="space-y-3 flex-1">
+                <p className="text-sm font-semibold text-[var(--accent-deep)]">Everything in GROWTH, plus:</p>
+                {[
+                  '5 Member',
+                  'Advanced work flows',
+                  'Worker/queue based campaign processing',
+                  'High-volume campaigns',
+                  'Advanced campaign analytics',
+                  'Advanced reports',
+                  'Role-based team access',
+                  'Priority support on call',
+                  'google sheet integration',
+                  'Campaign with live data in google sheets',
+                  'chat transfering to another user',
+                ].map((feature) => (
+                  <div key={feature} className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+                      <Check className="w-3 h-3 text-[var(--accent-2)]" />
+                    </div>
+                    <span className="text-sm text-[var(--muted)]">{feature}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 space-y-2">
+                <p className="text-xs text-[var(--accent-2)] font-semibold text-center bg-emerald-50 py-2 px-3 rounded-lg">
+                  Extra WhatsApp number: 1000 per number
+                </p>
+                <p className="text-xs text-[var(--muted)] text-center italic">
+                  Best for Automobile dealers, education, real estate, D2C, enterprises &amp; marketing agencies
+                </p>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
-
       {/* ═══════════ COMPARISON TABLE ═══════════ */}
       <section id="why-choose" className="relative py-20 md:py-28 bg-[var(--bg-soft)]">
         <div className="max-w-5xl mx-auto px-5 lg:px-8">
