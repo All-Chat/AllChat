@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Fragment, type FormEvent } from 'react';
+import { useEffect, useState, useRef, Fragment, type FormEvent } from 'react';
 import {
   CalendarCheck,
   MessageCircle,
@@ -225,9 +225,31 @@ function WhatsAppIcon({ className }: WhatsAppIconProps) {
 export default function AllChatPage() {
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
+  const demoEventFiredRef = useRef<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submitError, setSubmitError] = useState<string>('');
   const [openFaq, setOpenFaq] = useState<number>(-1);
   const [navScrolled, setNavScrolled] = useState<boolean>(false);
   const [activeTestimonial, setActiveTestimonial] = useState<number>(0);
+
+  // Fire the GTM event only after the Thank You UI has rendered.
+  // The ref prevents duplicate events if React re-runs effects.
+  useEffect(() => {
+    if (!formSubmitted || demoEventFiredRef.current) return;
+
+    demoEventFiredRef.current = true;
+
+    const dataLayerWindow = window as typeof window & {
+      dataLayer?: Array<Record<string, unknown>>;
+    };
+
+    dataLayerWindow.dataLayer = dataLayerWindow.dataLayer || [];
+    dataLayerWindow.dataLayer.push({
+      event: 'demo_form_success',
+      form_name: 'Book Free Demo',
+      page_path: window.location.pathname,
+    });
+  }, [formSubmitted]);
 
   const testimonials = [
     { 
@@ -338,26 +360,68 @@ export default function AllChatPage() {
 
   /* ── Handlers ── */
   const openModal = (): void => {
+    demoEventFiredRef.current = false;
     setFormSubmitted(false);
+    setSubmitError('');
     setModalOpen(true);
   };
 
   const closeModal = (): void => setModalOpen(false);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (
+    e: FormEvent<HTMLFormElement>
+  ): Promise<void> => {
     e.preventDefault();
+
+    if (isSubmitting) return;
+
     const form = e.currentTarget;
     const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
-    console.log('Demo Booking:', data);
-    setFormSubmitted(true);
-    setTimeout(() => {
-      setModalOpen(false);
-      setTimeout(() => {
-        setFormSubmitted(false);
-        form.reset();
-      }, 300);
-    }, 4000);
+    const payload = Object.fromEntries(formData.entries());
+
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const response = await fetch('/api/send-demo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+            'Your request could not be sent. Please try again.'
+        );
+      }
+
+      // Show success only after Resend accepts the request.
+      setFormSubmitted(true);
+
+      window.setTimeout(() => {
+        setModalOpen(false);
+
+        window.setTimeout(() => {
+          setFormSubmitted(false);
+          form.reset();
+        }, 300);
+      }, 4000);
+    } catch (error) {
+      console.error('AllChat demo form error:', error);
+
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : 'Something went wrong. Please try again.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const toggleFaq = (index: number): void =>
@@ -1903,7 +1967,7 @@ export default function AllChatPage() {
 
               <div className="mt-10 pt-8 border-t border-white/10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-emerald-100/60">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-300" /> Official Meta Partner
+                  <ShieldCheck className="w-4 h-4 text-emerald-300" /> Meta Tech Provider
                 </div>
                 <div className="flex items-center gap-2">
                   <Headset className="w-4 h-4 text-emerald-300" /> 24/7 Support
@@ -2062,15 +2126,33 @@ export default function AllChatPage() {
                   className="field-input"
                 />
               </div>
+              {submitError && (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                >
+                  {submitError}
+                </div>
+              )}
               <button
                 type="submit"
-                className="btn btn-primary w-full py-3.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
+                disabled={isSubmitting}
+                className="btn btn-primary w-full py-3.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <Send className="w-4 h-4" />
-                Submit &amp; Book Demo
+                {isSubmitting ? (
+                  <>
+                    <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                    Sending Request...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    Submit &amp; Book Demo
+                  </>
+                )}
               </button>
               <p className="text-[11px] text-center text-[var(--muted)] leading-relaxed">
-                By submitting, you agree to be contacted by AllChat regarding your demo request.
+                By submitting, you agree to be contacted by AllChat regarding your request.
               </p>
             </form>
           ) : (
@@ -2092,7 +2174,7 @@ export default function AllChatPage() {
                 Thank You! 🎉
               </h3>
               <p className="text-sm text-[var(--muted)] leading-relaxed mb-5">
-                Your demo request has been received. Our team will contact you within 24 hours to
+                Your request has been received. Our team will contact you within 24 hours to
                 schedule your personalized AllChat demo.
               </p>
               <button
